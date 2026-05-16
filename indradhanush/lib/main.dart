@@ -20,6 +20,44 @@ class IndradhanushApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    final user = Supabase.instance.client.auth.currentUser;
+
+    return MaterialApp(
+      title : 'Indradhanush',
+      debugShowCheckedModeBanner: false,
+      theme : AppTheme.theme,
+      initialRoute: != null? '/home' : '/auth',
+      onGenerateRoute: (settings) {
+        switch (settings.name) {
+          case '/auth' :
+          return MaterialPageRoute(builder: (_) => const AuthPage());
+
+          case '/home':
+            return MaterialPageRoute(
+                builder: (_) => const HomePage());
+
+          case '/add-event':
+            return MaterialPageRoute(
+                builder: (_) => const AddEventPage());
+
+          case '/event-details':
+            final eventId = settings.arguments as String;
+            return MaterialPageRoute(
+                builder: (_) => EventDetailsPage(eventId: eventId));
+
+          case '/income':
+            return MaterialPageRoute(
+                builder: (_) => const IncomePage());
+
+          case '/expenses':
+            return MaterialPageRoute(
+                builder: (_) => const AllEventsPage());
+
+          default:
+            return MaterialPageRoute(
+                builder: (_) => const AuthPage());
+        }
+      },
+    );
   }
 }
