@@ -1,4 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:indradhanush/add_event_page.dart';
+import 'package:indradhanush/all_events_page.dart';
+import 'package:indradhanush/auth_page.dart';
+import 'package:indradhanush/event_details_page.dart';
+import 'package:indradhanush/home_page.dart';
+import 'package:indradhanush/income_page.dart';
+import 'package:indradhanush/theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'config/supabase_config.dart';
 
@@ -26,7 +33,7 @@ class IndradhanushApp extends StatelessWidget {
       title : 'Indradhanush',
       debugShowCheckedModeBanner: false,
       theme : AppTheme.theme,
-      initialRoute: != null? '/home' : '/auth',
+      initialRoute: user != null? '/home' : '/auth',
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case '/auth' :

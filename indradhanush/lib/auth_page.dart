@@ -62,7 +62,7 @@ class _AuthPageState extends State<AuthPage>
       // if widget alive only then do signin async, otherwise no
 
       // after signin take to home, no back to home on press of back button
-      if (mounted) Navigator.pushReplacement(context, '/home');
+      if (mounted) Navigator.pushReplacementNamed(context, '/home');
     } catch(e) {
       if(mounted) { // checl if ui still exists before continuing
         ScaffoldMessenger.of(context).showSnackBar( // toast message
