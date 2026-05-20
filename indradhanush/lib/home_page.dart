@@ -299,11 +299,11 @@ class _HomePageState extends State<HomePage> {
             activeIcon: Icon(Icons.event),
             label: 'All Events',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.receipt_long_outlined),
-            activeIcon: Icon(Icons.receipt_long),
-            label: 'Expenses',
-          ),
+          // BottomNavigationBarItem(
+          //   icon: Icon(Icons.receipt_long_outlined),
+          //   activeIcon: Icon(Icons.receipt_long),
+          //   label: 'Expenses',
+          // ),
           BottomNavigationBarItem(
             icon: Icon(Icons.bar_chart_outlined),
             activeIcon: Icon(Icons.bar_chart),

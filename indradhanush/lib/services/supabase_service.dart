@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/intl.dart';
 
 class SupabaseService {
   static final SupabaseClient _client = Supabase.instance.client;
@@ -84,4 +85,26 @@ class SupabaseService {
     return List<Map<String, dynamic>>.from(response);
   }
 
+
+
+// method to check if dates are clashing
+//  List <Map<String,dynamic>> _eventsForSelectedDate =[];
+
+  static Future <List<Map<String, dynamic>>> checkEventsForDate(DateTime date) async {
+      final formattedDate = DateFormat('yyyy-MM-dd').format(date);
+
+      final response = await _client
+                              .from('events')
+                              .select('evnt_name, evnt_startTime, evnt_endTime')
+                              .eq('evnt_date', formattedDate);
+
+    return List<Map<String, dynamic>>.from(response);
+    // _eventsForSelectedDate = List<Map<String, dynamic>>.from(response);
+
+    // if(_eventsForSelectedDate.isNotEmpty){
+    //   final eventNames = _eventsForSelectedDate.map((event){
+    //     return "${event['evnt_name']} " "(${event['evnt_startTime']} - ${event['evnt_endTime']})";
+    //   }).join('\n');
+    // }
+  }
 }

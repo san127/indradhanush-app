@@ -14,6 +14,10 @@ class _AddEventPageState extends State<AddEventPage> {
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
 
+  List <Map<String,dynamic>> _eventsForSelectedDate =[];
+  String? _dateWarning;
+  String? _timeWarning;
+
   // Event fields
   final _eventNameCtrl = TextEditingController();
   DateTime? _eventDate;
@@ -72,8 +76,12 @@ class _AddEventPageState extends State<AddEventPage> {
     super.dispose();
   }
 
+  int _timeToMinutes(TimeOfDay time) {
+  return (time.hour * 60) + time.minute;
+}
+
   Future<void> _pickDate(ValueChanged<DateTime> onPicked) async {
-    final picked = await showDatePicker(
+  final  picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime(2020),
@@ -85,8 +93,36 @@ class _AddEventPageState extends State<AddEventPage> {
         child: child!,
       ),
     );
-    if (picked != null) onPicked(picked);
+    if (picked != null){
+      try {
+
+      _eventsForSelectedDate = await SupabaseService.checkEventsForDate(picked);
+
+      if (_eventsForSelectedDate.isNotEmpty) {
+      final eventNames = _eventsForSelectedDate.map((e) {
+        return "${e['evnt_name']} "
+            "(${e['evnt_startTime']} - ${e['evnt_endTime']})";
+      }).join('\n');
+
+      setState(() {
+        _dateWarning =
+            "Events already exist on this date:\n$eventNames";
+      });
+
+      } else {
+      setState(() {
+        _dateWarning = null;
+      });
+      }}
+    catch (e) {
+    debugPrint("Date check error: $e");
+    }
+
+  onPicked(picked);
   }
+ } 
+
+  
 
   Future<void> _pickTime(ValueChanged<TimeOfDay> onPicked) async {
     final picked = await showTimePicker(
@@ -107,6 +143,62 @@ class _AddEventPageState extends State<AddEventPage> {
 
   String _fmtTime(TimeOfDay? t) =>
       t != null ? t.format(context) : 'Select time';
+
+
+  void _checkTimeClash(TimeOfDay selectedTime) {
+  bool clashFound = false;
+  String clashMessage = '';
+
+  final selectedMinutes = _timeToMinutes(selectedTime);
+
+  for (final event in _eventsForSelectedDate) {
+    if (event['evnt_startTime'] == null ||
+        event['evnt_endTime'] == null) {
+      continue;
+    }
+
+    final startParts =
+        event['evnt_startTime'].toString().split(':');
+
+    final endParts =
+        event['evnt_endTime'].toString().split(':');
+
+    final existingStart = TimeOfDay(
+      hour: int.parse(startParts[0]),
+      minute: int.parse(startParts[1]),
+    );
+
+    final existingEnd = TimeOfDay(
+      hour: int.parse(endParts[0]),
+      minute: int.parse(endParts[1]),
+    );
+
+    final existingStartMinutes =
+        _timeToMinutes(existingStart);
+
+    final existingEndMinutes =
+        _timeToMinutes(existingEnd);
+
+    if (selectedMinutes >= existingStartMinutes &&
+        selectedMinutes <= existingEndMinutes) {
+      clashFound = true;
+
+      clashMessage =
+          "Time clashes with ${event['evnt_name']} "
+          "(${event['evnt_startTime']} - ${event['evnt_endTime']})";
+
+      break;
+    }
+  }
+
+  setState(() {
+    _timeWarning = clashFound ? clashMessage : null;
+  });
+
+  if (clashFound) {
+    _showSnack(clashMessage);
+  }
+}
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
@@ -214,30 +306,62 @@ class _AddEventPageState extends State<AddEventPage> {
               const SizedBox(height: 14),
               _DatePickerField(
                   label: 'Event Date',
-                  value: _fmtDate(_eventDate),
-                  onTap: () => _pickDate((d) => setState(() => _eventDate = d))),
+  value: _fmtDate(_eventDate),
+  onTap: () => _pickDate(
+    (d) => setState(() => _eventDate = d),
+  ),
+),
+
+if (_dateWarning != null)
+  Padding(
+    padding: const EdgeInsets.only(top: 8),
+    child: Text(
+      _dateWarning!,
+      style: const TextStyle(
+        color: Colors.orange,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+  ),
               const SizedBox(height: 14),
               Row(
                 children: [
                   Expanded(
                     child: _TimePickerField(
-                      label: 'Start Time',
-                      value: _fmtTime(_startTime),
-                      onTap: () => _pickTime(
-                          (t) => setState(() => _startTime = t)),
-                    ),
+  label: 'Start Time',
+  value: _fmtTime(_startTime),
+  onTap: () => _pickTime((t) {
+    setState(() => _startTime = t);
+
+    _checkTimeClash(t);
+  }),
+),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _TimePickerField(
-                      label: 'End Time',
-                      value: _fmtTime(_endTime),
-                      onTap: () =>
-                          _pickTime((t) => setState(() => _endTime = t)),
-                    ),
+  label: 'End Time',
+  value: _fmtTime(_endTime),
+  onTap: () => _pickTime((t) {
+    setState(() => _endTime = t);
+
+    _checkTimeClash(t);
+  }),
+),
                   ),
                 ],
               ),
+              if (_timeWarning != null)
+  Padding(
+    padding: const EdgeInsets.only(top: 8),
+    child: Text(
+      _timeWarning!,
+      style: const TextStyle(
+        color: Colors.red,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+  ),
               const SizedBox(height: 14),
               _TextInput(controller: _hostNameCtrl, label: 'Host Name'),
               const SizedBox(height: 14),
@@ -453,6 +577,7 @@ class _DatePickerField extends StatelessWidget {
 
   const _DatePickerField(
       {required this.label, required this.value, required this.onTap});
+  
 
   @override
   Widget build(BuildContext context) {
