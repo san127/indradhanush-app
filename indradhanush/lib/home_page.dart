@@ -473,7 +473,7 @@ class _CalendarWidget extends StatelessWidget {
             children: [
               _LegendItem(color: AppColors.calCompleted, label: 'Completed'),
               _LegendItem(color: AppColors.calUpcoming, label: 'Upcoming'),
-              _LegendItem(color: AppColors.calUnpaid, label: 'Unpaid'),
+            //  _LegendItem(color: AppColors.calUnpaid, label: 'Unpaid'),
               _LegendItem(color: AppColors.calUnconfirmed, label: 'Unconfirmed'),
             ],
           ),
