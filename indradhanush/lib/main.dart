@@ -3,8 +3,10 @@ import 'package:indradhanush/add_event_page.dart';
 import 'package:indradhanush/all_events_page.dart';
 import 'package:indradhanush/auth_page.dart';
 import 'package:indradhanush/event_details_page.dart';
+import 'package:indradhanush/expenses_page.dart';
 import 'package:indradhanush/home_page.dart';
 import 'package:indradhanush/income_page.dart';
+import 'package:indradhanush/finance_dashboard_page.dart';
 import 'package:indradhanush/theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'config/supabase_config.dart';
@@ -54,11 +56,11 @@ class IndradhanushApp extends StatelessWidget {
 
           case '/income':
             return MaterialPageRoute(
-                builder: (_) => const IncomePage());
+                builder: (_) => const FinanceDashboardPage());
 
           case '/expenses':
             return MaterialPageRoute(
-                builder: (_) => const AllEventsPage());
+                builder: (_) => const ExpensesPage());
 
           default:
             return MaterialPageRoute(

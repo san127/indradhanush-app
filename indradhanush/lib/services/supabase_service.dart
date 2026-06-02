@@ -107,4 +107,33 @@ class SupabaseService {
     //   }).join('\n');
     // }
   }
+
+  static Stream<List<Map<String, dynamic>>> eventStream() {
+  return _client
+      .from('events')
+      .stream(primaryKey: ['evnt_id']);
+}
+
+static Future<void> createExpense(
+    Map<String, dynamic> data) async {
+  await _client
+      .from('Expenses')
+      .insert(data);
+}
+
+  static Future<List<Map<String, dynamic>>> getExpensesForMonth(
+    DateTime month) async {
+
+  final start = DateTime(month.year, month.month, 1);
+  final end = DateTime(month.year, month.month + 1, 1);
+
+  final response = await _client
+      .from('Expenses')
+      .select()
+      .gte('exp_date', start.toIso8601String().split('T')[0])
+      .lt('exp_date', end.toIso8601String().split('T')[0])
+      .order('exp_date');
+
+  return List<Map<String, dynamic>>.from(response);
+}
 }

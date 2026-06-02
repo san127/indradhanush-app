@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/supabase_service.dart';
 import '../theme.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -15,11 +16,14 @@ class _HomePageState extends State<HomePage> {
   List<Map<String, dynamic>> _events = [];
   bool _loading = true;
   DateTime _focusedMonth = DateTime.now();
+
+  RealtimeChannel? _eventsChannel;
   
   @override
   void initState() {
     super.initState();
     _loadEvents();
+    _listenToEvents();
   }
 
 
@@ -32,6 +36,22 @@ class _HomePageState extends State<HomePage> {
     if (mounted) setState(()=> _loading=false);
   }
 
+void _listenToEvents() {
+  _eventsChannel = Supabase.instance.client
+      .channel('events_changes')
+      .onPostgresChanges(
+        event: PostgresChangeEvent.all,
+        schema: 'public',
+        table: 'events',
+        callback: (payload) {
+          print('Realtime event received!');
+          print(payload);
+
+          _loadEvents();
+        },
+      )
+      .subscribe();
+}
 
 
   Map<String, dynamic>? get _nextEvent {
@@ -92,6 +112,12 @@ class _HomePageState extends State<HomePage> {
     if (index == 1) Navigator.pushNamed(context, '/expenses');
     if (index == 2) Navigator.pushNamed(context, '/income');
     // index 0 stays on home (all events)
+  }
+
+  @override
+  void dispose() {
+    _eventsChannel?.unsubscribe();
+    super.dispose();
   }
 
   @override
@@ -299,11 +325,11 @@ class _HomePageState extends State<HomePage> {
             activeIcon: Icon(Icons.event),
             label: 'All Events',
           ),
-          // BottomNavigationBarItem(
-          //   icon: Icon(Icons.receipt_long_outlined),
-          //   activeIcon: Icon(Icons.receipt_long),
-          //   label: 'Expenses',
-          // ),
+           BottomNavigationBarItem(
+             icon: Icon(Icons.receipt_long_outlined),
+             activeIcon: Icon(Icons.receipt_long),
+             label: 'Expenses',
+           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.bar_chart_outlined),
             activeIcon: Icon(Icons.bar_chart),
@@ -473,7 +499,7 @@ class _CalendarWidget extends StatelessWidget {
             children: [
               _LegendItem(color: AppColors.calCompleted, label: 'Completed'),
               _LegendItem(color: AppColors.calUpcoming, label: 'Upcoming'),
-            //  _LegendItem(color: AppColors.calUnpaid, label: 'Unpaid'),
+              // _LegendItem(color: AppColors.calUnpaid, label: 'Unpaid'),
               _LegendItem(color: AppColors.calUnconfirmed, label: 'Unconfirmed'),
             ],
           ),
