@@ -56,11 +56,11 @@ class IndradhanushApp extends StatelessWidget {
 
           case '/income':
             return MaterialPageRoute(
-                builder: (_) => const FinanceDashboardPage());
+                builder: (_) => const IncomePage());
 
           case '/expenses':
             return MaterialPageRoute(
-                builder: (_) => const ExpensesPage());
+                builder: (_) => const FinanceDashboardPage());
 
           default:
             return MaterialPageRoute(

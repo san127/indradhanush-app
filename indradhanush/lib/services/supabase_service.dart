@@ -136,4 +136,209 @@ static Future<void> createExpense(
 
   return List<Map<String, dynamic>>.from(response);
 }
+
+static Future<int> getEstimatedRevenueForMonth(
+    DateTime month) async {
+
+  final start =
+      DateTime(month.year, month.month, 1);
+
+  final end =
+      DateTime(month.year, month.month + 1, 1);
+
+  final response = await _client
+      .from('events')
+      .select('amount')
+      .gte(
+        'evnt_date',
+        start.toIso8601String().split('T')[0],
+      )
+      .lt(
+        'evnt_date',
+        end.toIso8601String().split('T')[0],
+      );
+
+  int total = 0;
+
+  for (final row in response) {
+    total += ((row['amount'] ?? 0) as num).toInt();
+  }
+
+  return total;
+}
+
+
+static Future<List<Map<String, dynamic>>>
+    getAdvancesForMonth(DateTime month) async {
+
+  final start =
+      DateTime(month.year, month.month, 1);
+
+  final end =
+      DateTime(month.year, month.month + 1, 1);
+
+  final response = await _client
+      .from('advanceDetails')
+      .select(
+        'adv_amount, adv_mode, adv_paid_date',
+      )
+      .gte(
+        'adv_paid_date',
+        start.toIso8601String().split('T')[0],
+      )
+      .lt(
+        'adv_paid_date',
+        end.toIso8601String().split('T')[0],
+      );
+
+  return List<Map<String, dynamic>>.from(
+    response,
+  );
+}
+
+static Future<List<Map<String, dynamic>>>
+    getPaymentsForMonth(DateTime month) async {
+
+  final start =
+      DateTime(month.year, month.month, 1);
+
+  final end =
+      DateTime(month.year, month.month + 1, 1);
+
+  final response = await _client
+      .from('payments')
+      .select(
+        'final_amount_paid, pay_mode, pay_date',
+      )
+      .gte(
+        'pay_date',
+        start.toIso8601String().split('T')[0],
+      )
+      .lt(
+        'pay_date',
+        end.toIso8601String().split('T')[0],
+      );
+
+  return List<Map<String, dynamic>>.from(
+    response,
+  );
+}
+
+static Future<int> getActualRevenueForMonth(
+    DateTime month) async {
+
+  final advances =
+      await getAdvancesForMonth(month);
+
+  final payments =
+      await getPaymentsForMonth(month);
+
+  int total = 0;
+
+  for (final row in advances) {
+    total +=
+        ((row['adv_amount'] ?? 0) as num)
+            .toInt();
+  }
+
+  for (final row in payments) {
+    total += ((row['final_amount_paid'] ?? 0)
+            as num)
+        .toInt();
+  }
+
+  return total;
+}
+
+static Future<Map<String, int>>
+    getRevenueBreakdownForMonth(
+        DateTime month) async {
+
+  final advances =
+      await getAdvancesForMonth(month);
+
+  final payments =
+      await getPaymentsForMonth(month);
+
+  int cash = 0;
+  int upi = 0;
+  int cheque = 0;
+  int bankTransfer = 0;
+
+  void addAmount(
+    String? mode,
+    int amount,
+  ) {
+    switch (mode?.toLowerCase()) {
+      case 'cash':
+        cash += amount;
+        break;
+
+      case 'upi':
+        upi += amount;
+        break;
+
+      case 'cheque':
+        cheque += amount;
+        break;
+
+      case 'bank_transfer':
+        bankTransfer += amount;
+        break;
+    }
+  }
+
+  for (final row in advances) {
+    addAmount(
+      row['adv_mode']?.toString(),
+      ((row['adv_amount'] ?? 0) as num)
+          .toInt(),
+    );
+  }
+
+  for (final row in payments) {
+    addAmount(
+      row['pay_mode']?.toString(),
+      ((row['final_amount_paid'] ?? 0)
+              as num)
+          .toInt(),
+    );
+  }
+
+  return {
+    'cash': cash,
+    'upi': upi,
+    'cheque': cheque,
+    'bank_transfer': bankTransfer,
+  };
+}
+
+static Future<void> deleteExpense(
+  int expenseId,
+) async {
+  await _client
+      .from('Expenses')
+      .delete()
+      .eq('exp_id', expenseId);
+}
+
+static Future<void> updateExpense({
+  required int expenseId,
+  required String name,
+  required int amount,
+  required String paymentMode,
+  required DateTime date,
+}) async {
+  await _client
+      .from('Expenses')
+      .update({
+        'exp_name': name,
+        'exp_amount': amount,
+        'exp_pay_mode': paymentMode,
+        'exp_date':
+            DateFormat('yyyy-MM-dd')
+                .format(date),
+      })
+      .eq('exp_id', expenseId);
+}
 }
