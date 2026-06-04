@@ -65,6 +65,34 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
     _loadData();
   }
 
+  bool get _eventCompleted {
+  return _event?['evnt_compl_status'] == true;
+}
+
+bool get _paymentPending {
+  final status =
+      _payment?['pay_status']
+          ?.toString()
+          .toLowerCase();
+
+  return status == null ||
+      status == 'not-paid' ||
+      status == 'partially paid';
+}
+
+int get _remainingAmount {
+  final total =
+      int.tryParse(_amountCtrl.text) ?? 0;
+
+  final advance =
+      int.tryParse(_advAmountCtrl.text) ?? 0;
+
+  final finalPaid =
+      int.tryParse(_finalAmountCtrl.text) ?? 0;
+
+  return total - advance - finalPaid;
+}
+
   Future<void> _loadData() async {
     setState(() => _loading = true);
     try {
@@ -172,6 +200,8 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
     }
   }
 
+  
+
   Future<void> _save() async {
     setState(() => _saving = true);
     try {
@@ -278,6 +308,71 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
       t != null ? t.format(context) : 'Select time';
 
   // ── build ────────────────────────────────────────────────────────────────────
+  
+
+
+  Widget _paymentWarningCard() {
+  return Container(
+    width: double.infinity,
+    margin: const EdgeInsets.only(bottom: 16),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.orange.shade50,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(
+        color: Colors.orange,
+      ),
+    ),
+    child: Column(
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
+      children: [
+
+        const Row(
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.orange,
+            ),
+            SizedBox(width: 8),
+            Text(
+              "Payment Pending",
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 10),
+
+        Column(
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    Text(
+      "Total Event Amount: ₹${_amountCtrl.text.isEmpty ? 0 : _amountCtrl.text}",
+    ),
+    Text(
+      "Advance Received: ₹${_advAmountCtrl.text.isEmpty ? 0 : _advAmountCtrl.text}",
+    ),
+    Text(
+      "Final Payment Received: ₹${_finalAmountCtrl.text.isEmpty ? 0 : _finalAmountCtrl.text}",
+    ),
+    const Divider(),
+    Text(
+      "Remaining Due: ₹$_remainingAmount",
+      style: const TextStyle(
+        fontWeight: FontWeight.w800,
+        fontSize: 16,
+      ),
+    ),
+  ],
+)
+      ],
+    ),
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -310,10 +405,14 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
           : SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _EditableField(
-                    label: 'Event Name',
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+              
+                if (_eventCompleted && _remainingAmount > 0)
+                  _paymentWarningCard(),
+
+                _EditableField(
+                  label: 'Event Name',
                     controller: _eventNameCtrl,
                     onChanged: (_) => _markChanged(),
                   ),
@@ -370,8 +469,37 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
                     controller: _amountCtrl,
                     keyboardType: TextInputType.number,
                     onChanged: (_) => _markChanged(),
+                  ),const SizedBox(height: 8),
+
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius:
+                          BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.border,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Text(
+                          'Remaining Due',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '₹$_remainingAmount',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: Colors.orange,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 16),
 
                   // Confirmation status
                   const Text('Confirmation Status',
@@ -587,18 +715,19 @@ class _EditableFieldState extends State<_EditableField> {
       children: [
         Expanded(
           child: TextFormField(
-            controller: widget.controller,
-            enabled: _editing,
-            keyboardType: widget.keyboardType,
-            onChanged: widget.onChanged,
-            decoration: InputDecoration(
-              labelText: widget.label,
-              filled: true,
-              fillColor: _editing
-                  ? AppColors.surfaceVariant
-                  : AppColors.lavender.withOpacity(0.3),
+          controller: widget.controller,
+          readOnly: !_editing,
+          keyboardType: widget.keyboardType,
+          onChanged: widget.onChanged,
+          decoration: InputDecoration(
+            labelText: widget.label,
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
+        )
         ),
         const SizedBox(width: 8),
         GestureDetector(

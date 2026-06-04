@@ -109,7 +109,7 @@ void _listenToEvents() {
 
   void _onNavTap(int index) {
     if (index == _navIndex) return;
-    if (index == 1) Navigator.pushNamed(context, '/expenses');
+    if (index == 1) Navigator.pushNamed(context,'/expenses',);
     if (index == 2) Navigator.pushNamed(context, '/income');
     // index 0 stays on home (all events)
   }
@@ -125,7 +125,10 @@ void _listenToEvents() {
     final now = DateTime.now();
     final next = _nextEvent;
 
-    return Scaffold(
+      // PopScope (
+      // canPop: false,
+      // child : 
+      return Scaffold(
       backgroundColor: AppColors.lavenderLight,
       body: SafeArea(
         child: _loading
@@ -315,7 +318,7 @@ void _listenToEvents() {
                   ),
                 ),
               ),
-      ),
+            ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _navIndex,
         onTap: _onNavTap,
@@ -325,11 +328,11 @@ void _listenToEvents() {
             activeIcon: Icon(Icons.event),
             label: 'All Events',
           ),
-           BottomNavigationBarItem(
-             icon: Icon(Icons.receipt_long_outlined),
-             activeIcon: Icon(Icons.receipt_long),
-             label: 'Expenses',
-           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.receipt_long_outlined),
+            activeIcon: Icon(Icons.receipt_long),
+            label: 'Expenses',
+          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.bar_chart_outlined),
             activeIcon: Icon(Icons.bar_chart),
@@ -337,8 +340,8 @@ void _listenToEvents() {
           ),
         ],
       ),
-    );
-  }
+  );
+}
 
   String _formatTime(String? t) {
     if (t == null) return '';
