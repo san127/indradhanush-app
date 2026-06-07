@@ -96,20 +96,22 @@ void _listenToEvents() {
     return AppColors.calUpcoming;
   }
 
-  Map<String, dynamic>? _eventForDay(DateTime day) {
-    try {
-      return _events.firstWhere(
-          (e) => e['evnt_date'] != null && _isSameDay(DateTime.parse(e['evnt_date']), day));
-    } catch (_) {
-      return null;
-    }
-  }
+  List<Map<String, dynamic>> _eventsForDay(
+    DateTime day) {
 
+  return _events.where((e) {
+    return e['evnt_date'] != null &&
+        _isSameDay(
+          DateTime.parse(e['evnt_date']),
+          day,
+        );
+  }).toList();
+}
   // ── navigation ───────────────────────────────────────────────────────────────
 
   void _onNavTap(int index) {
     if (index == _navIndex) return;
-    if (index == 1) Navigator.pushNamed(context,'/expenses',);
+    if (index == 1) Navigator.pushNamed(context,'/finances',);
     if (index == 2) Navigator.pushNamed(context, '/income');
     // index 0 stays on home (all events)
   }
@@ -256,10 +258,92 @@ void _listenToEvents() {
                         onMonthChanged: (d) =>
                             setState(() => _focusedMonth = d),
                         cellColor: _cellColor,
-                        eventForDay: _eventForDay,
-                        onDayTap: (event) {
-                          Navigator.pushNamed(context, '/event-details',
-                              arguments: event['evnt_id']);
+                        eventsForDay: _eventsForDay,
+                        onDayTap: (events) {
+
+                          if (events.length == 1) {
+                            Navigator.pushNamed(
+                              context,
+                              '/event-details',
+                              arguments:
+                                  events.first['evnt_id'],
+                            );
+                            return;
+                          }
+
+                          showModalBottomSheet(
+                            context: context,
+                            builder: (context) {
+
+                              return Padding(
+                                padding:
+                                    const EdgeInsets.all(16),
+                                child: Column(
+                                  mainAxisSize:
+                                      MainAxisSize.min,
+                                  children: [
+
+                                    Text(
+                                      DateFormat(
+                                        'd MMM yyyy',
+                                      ).format(
+                                        DateTime.parse(
+                                          events.first[
+                                              'evnt_date'],
+                                        ),
+                                      ),
+                                      style:
+                                          const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight:
+                                            FontWeight.w800,
+                                      ),
+                                    ),
+
+                                    const SizedBox(
+                                        height: 16),
+
+                                    ...events.map((event) {
+
+                                      return ListTile(
+                                        title: Text(
+                                          event['evnt_name']
+                                              ?? '',
+                                        ),
+
+                                        subtitle: Text(
+                                          _formatTime(
+                                            event[
+                                                'evnt_startTime'],
+                                          ),
+                                        ),
+
+                                        trailing:
+                                            const Icon(
+                                          Icons
+                                              .chevron_right,
+                                        ),
+
+                                        onTap: () {
+
+                                          Navigator.pop(
+                                              context);
+
+                                          Navigator.pushNamed(
+                                            context,
+                                            '/event-details',
+                                            arguments:
+                                                event[
+                                                    'evnt_id'],
+                                          );
+                                        },
+                                      );
+                                    }),
+                                  ],
+                                ),
+                              );
+                            },
+                          );
                         },
                       ),
                       const SizedBox(height: 16),
@@ -372,15 +456,15 @@ class _CalendarWidget extends StatelessWidget {
   final DateTime focusedMonth;
   final ValueChanged<DateTime> onMonthChanged;
   final Color Function(Map<String, dynamic>) cellColor;
-  final Map<String, dynamic>? Function(DateTime) eventForDay;
-  final ValueChanged<Map<String, dynamic>> onDayTap;
+  final List<Map<String, dynamic>> Function(DateTime) eventsForDay;
+  final ValueChanged<List<Map<String, dynamic>>>onDayTap;
 
   const _CalendarWidget({
     required this.events,
     required this.focusedMonth,
     required this.onMonthChanged,
     required this.cellColor,
-    required this.eventForDay,
+    required this.eventsForDay,
     required this.onDayTap,
   });
 
@@ -459,36 +543,78 @@ class _CalendarWidget extends StatelessWidget {
               final day = index - startWeekday + 1;
               final date =
                   DateTime(focusedMonth.year, focusedMonth.month, day);
-              final event = eventForDay(date);
+              final events = eventsForDay(date);
+              final hasEvents = events.isNotEmpty;
               final isToday = _isSameDay(date, DateTime.now());
 
               return GestureDetector(
-                onTap: event != null ? () => onDayTap(event) : null,
+              onTap: hasEvents? () => onDayTap(events) : null,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: event != null
-                        ? cellColor(event).withOpacity(0.85)
-                        : Colors.transparent,
+                    color: !hasEvents
+                      ? Colors.transparent
+                      : events.length >= 3
+                          ? Colors.red
+                          : events.length == 2
+                              ? Colors.orange
+                              : cellColor(
+                                  events.first,
+                                ).withOpacity(0.85),
+                          // : Colors.transparent,
                     borderRadius: BorderRadius.circular(8),
                     border: isToday
                         ? Border.all(color: AppColors.primary, width: 2)
                         : null,
                   ),
-                  child: Center(
-                    child: Text(
-                      '$day',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: event != null || isToday
-                            ? FontWeight.w700
-                            : FontWeight.w500,
-                        color: event != null
-                            ? Colors.white
-                            : isToday
-                                ? AppColors.primary
-                                : AppColors.textSecondary,
+                  child: Column(
+                    mainAxisAlignment:
+                        MainAxisAlignment.center,
+                    children: [
+
+                      Text(
+                        '$day',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight:
+                              hasEvents || isToday
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                          color: hasEvents
+                              ? Colors.white
+                              : isToday
+                                  ? AppColors.primary
+                                  : AppColors.textSecondary,
+                        ),
                       ),
-                    ),
+
+                      if (events.length > 1)
+                        Container(
+                          margin:
+                              const EdgeInsets.only(
+                            top: 2,
+                          ),
+                          padding:
+                              const EdgeInsets.symmetric(
+                            horizontal: 4,
+                          ),
+                          decoration:
+                              BoxDecoration(
+                            color: Colors.white,
+                            borderRadius:
+                                BorderRadius.circular(
+                                    10),
+                          ),
+                          child: Text(
+                            '${events.length}',
+                            style:
+                                const TextStyle(
+                              fontSize: 9,
+                              fontWeight:
+                                  FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               );

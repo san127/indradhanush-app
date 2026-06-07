@@ -168,6 +168,34 @@ static Future<int> getEstimatedRevenueForMonth(
 }
 
 
+// static Future<List<Map<String, dynamic>>>
+//     getAdvancesForMonth(DateTime month) async {
+
+//   final start =
+//       DateTime(month.year, month.month, 1);
+
+//   final end =
+//       DateTime(month.year, month.month + 1, 1);
+
+//   final response = await _client
+//       .from('advanceDetails')
+//       .select(
+//         'adv_amount, adv_mode, adv_paid_date',
+//       )
+//       .gte(
+//         'adv_paid_date',
+//         start.toIso8601String().split('T')[0],
+//       )
+//       .lt(
+//         'adv_paid_date',
+//         end.toIso8601String().split('T')[0],
+//       );
+
+//   return List<Map<String, dynamic>>.from(
+//     response,
+//   );
+// }
+
 static Future<List<Map<String, dynamic>>>
     getAdvancesForMonth(DateTime month) async {
 
@@ -177,24 +205,73 @@ static Future<List<Map<String, dynamic>>>
   final end =
       DateTime(month.year, month.month + 1, 1);
 
-  final response = await _client
-      .from('advanceDetails')
-      .select(
-        'adv_amount, adv_mode, adv_paid_date',
-      )
+  final events = await _client
+      .from('events')
+      .select('evnt_id')
       .gte(
-        'adv_paid_date',
-        start.toIso8601String().split('T')[0],
+        'evnt_date',
+        DateFormat('yyyy-MM-dd').format(start),
       )
       .lt(
-        'adv_paid_date',
-        end.toIso8601String().split('T')[0],
+        'evnt_date',
+        DateFormat('yyyy-MM-dd').format(end),
       );
 
+  if (events.isEmpty) {
+    return [];
+  }
+
+  final eventIds = events
+      .map((e) => e['evnt_id'])
+      .toList();
+
+  final advances = await _client
+      .from('advanceDetails')
+      .select(
+        'adv_amount, adv_mode, adv_paid_date, event_id',
+      )
+      .inFilter(
+        'event_id',
+        eventIds,
+      );
+
+  print('advances = $advances');
+
   return List<Map<String, dynamic>>.from(
-    response,
+    advances,
   );
 }
+
+// static Future<List<Map<String, dynamic>>>
+//     getPaymentsForMonth(DateTime month) async {
+
+//   final start =
+//       DateTime(month.year, month.month, 1);
+
+//   final end =
+//       DateTime(month.year, month.month + 1, 1);
+
+//   final response = await _client
+//       .from('payments')
+//       .select(
+//         'final_amount_paid, pay_mode, pay_date',
+//       )
+//       .gte(
+//         'pay_date',
+//         start.toIso8601String().split('T')[0],
+//       )
+//       .lt(
+//         'pay_date',
+//         end.toIso8601String().split('T')[0],
+//       );
+
+//       print('payments = $response');
+
+//   return List<Map<String, dynamic>>.from(
+//     response,
+//   );
+// }
+
 
 static Future<List<Map<String, dynamic>>>
     getPaymentsForMonth(DateTime month) async {
@@ -205,22 +282,40 @@ static Future<List<Map<String, dynamic>>>
   final end =
       DateTime(month.year, month.month + 1, 1);
 
-  final response = await _client
-      .from('payments')
-      .select(
-        'final_amount_paid, pay_mode, pay_date',
-      )
+  final events = await _client
+      .from('events')
+      .select('evnt_id')
       .gte(
-        'pay_date',
-        start.toIso8601String().split('T')[0],
+        'evnt_date',
+        DateFormat('yyyy-MM-dd').format(start),
       )
       .lt(
-        'pay_date',
-        end.toIso8601String().split('T')[0],
+        'evnt_date',
+        DateFormat('yyyy-MM-dd').format(end),
       );
 
+  if (events.isEmpty) {
+    return [];
+  }
+
+  final eventIds = events
+      .map((e) => e['evnt_id'])
+      .toList();
+
+  final payments = await _client
+      .from('payments')
+      .select(
+        'final_amount_paid, pay_mode, pay_date, event_id',
+      )
+      .inFilter(
+        'event_id',
+        eventIds,
+      );
+
+  print('payments = $payments');
+
   return List<Map<String, dynamic>>.from(
-    response,
+    payments,
   );
 }
 
@@ -246,6 +341,8 @@ static Future<int> getActualRevenueForMonth(
             as num)
         .toInt();
   }
+
+  print('total adv + pay = $total');
 
   return total;
 }
