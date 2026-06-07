@@ -54,20 +54,53 @@ void _listenToEvents() {
 }
 
 
-  Map<String, dynamic>? get _nextEvent {
-    final now = DateTime.now();
-    final upcoming = _events.where((e) {
-      final d = e['evnt_date'];
-      if (d == null) return false;
-      final date = DateTime.parse(d);
-      return date.isAfter(now) || _isSameDay(date, now);
-    }).toList()
+  List<Map<String, dynamic>>
+    get _nextEventDayEvents {
 
-    // .. cascade operator 
-      ..sort((a, b) =>
-          DateTime.parse(a['evnt_date']).compareTo(DateTime.parse(b['evnt_date'])));
-    return upcoming.isNotEmpty ? upcoming.first : null;
+  final now = DateTime.now();
+
+  final upcoming = _events.where((e) {
+
+    final d = e['evnt_date'];
+
+    if (d == null) return false;
+
+    final date = DateTime.parse(d);
+
+    return date.isAfter(now) ||
+        _isSameDay(date, now);
+
+  }).toList()
+
+    ..sort((a, b) =>
+        DateTime.parse(
+          a['evnt_date'],
+        ).compareTo(
+          DateTime.parse(
+            b['evnt_date'],
+          ),
+        ));
+
+  if (upcoming.isEmpty) {
+    return [];
   }
+
+  final firstDate =
+      DateTime.parse(
+        upcoming.first['evnt_date'],
+      );
+
+  return upcoming.where((e) {
+
+    return _isSameDay(
+      DateTime.parse(
+        e['evnt_date'],
+      ),
+      firstDate,
+    );
+
+  }).toList();
+}
 
   List<Map<String, dynamic>> get _upcomingEvents {
     final now = DateTime.now();
@@ -125,7 +158,7 @@ void _listenToEvents() {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final next = _nextEvent;
+   final nextDayEvents =_nextEventDayEvents;
 
       // PopScope (
       // canPop: false,
@@ -167,89 +200,196 @@ void _listenToEvents() {
                       ),
                       const SizedBox(height: 20),
 
-                      // ── Next upcoming event ───────────────────────────────
-                      if (next != null) ...[
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [
-                                AppColors.primary,
-                                AppColors.primaryLighter
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'NEXT UPCOMING EVENT',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 11,
-                                  letterSpacing: 1.5,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                next['evnt_name'] ?? '—',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  const Icon(Icons.calendar_today_outlined,
-                                      size: 13, color: Colors.white70),
-                                  const SizedBox(width: 5),
-                                  Text(
-                                    DateFormat('d MMM yyyy')
-                                        .format(DateTime.parse(next['evnt_date'])),
-                                    style: const TextStyle(
-                                        color: Colors.white70, fontSize: 13),
-                                  ),
-                                  if (next['evnt_startTime'] != null) ...[
-                                    const SizedBox(width: 12),
-                                    const Icon(Icons.access_time_outlined,
-                                        size: 13, color: Colors.white70),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      _formatTime(next['evnt_startTime']),
-                                      style: const TextStyle(
-                                          color: Colors.white70, fontSize: 13),
-                                    ),
-                                  ],
+                      // // ── Next upcoming event ───────────────────────────────
+                      // if (next != null) ...[
+                      //   Container(
+                      //     width: double.infinity,
+                      //     padding: const EdgeInsets.all(16),
+                      //     decoration: BoxDecoration(
+                      //       gradient: const LinearGradient(
+                      //         colors: [
+                      //           AppColors.primary,
+                      //           AppColors.primaryLighter
+                      //         ],
+                      //         begin: Alignment.topLeft,
+                      //         end: Alignment.bottomRight,
+                      //       ),
+                      //       borderRadius: BorderRadius.circular(16),
+                      //     ),
+                      //     child: Column(
+                      //       crossAxisAlignment: CrossAxisAlignment.start,
+                      //       children: [
+                      //         const Text(
+                      //           'NEXT UPCOMING EVENT',
+                      //           style: TextStyle(
+                      //             color: Colors.white70,
+                      //             fontSize: 11,
+                      //             letterSpacing: 1.5,
+                      //             fontWeight: FontWeight.w700,
+                      //           ),
+                      //         ),
+                      //         const SizedBox(height: 6),
+                      //         Text(
+                      //           next['evnt_name'] ?? '—',
+                      //           style: const TextStyle(
+                      //             color: Colors.white,
+                      //             fontSize: 20,
+                      //             fontWeight: FontWeight.w800,
+                      //           ),
+                      //         ),
+                      //         const SizedBox(height: 4),
+                      //         Row(
+                      //           children: [
+                      //             const Icon(Icons.calendar_today_outlined,
+                      //                 size: 13, color: Colors.white70),
+                      //             const SizedBox(width: 5),
+                      //             Text(
+                      //               DateFormat('d MMM yyyy')
+                      //                   .format(DateTime.parse(next['evnt_date'])),
+                      //               style: const TextStyle(
+                      //                   color: Colors.white70, fontSize: 13),
+                      //             ),
+                      //             if (next['evnt_startTime'] != null) ...[
+                      //               const SizedBox(width: 12),
+                      //               const Icon(Icons.access_time_outlined,
+                      //                   size: 13, color: Colors.white70),
+                      //               const SizedBox(width: 5),
+                      //               Text(
+                      //                 _formatTime(next['evnt_startTime']),
+                      //                 style: const TextStyle(
+                      //                     color: Colors.white70, fontSize: 13),
+                      //               ),
+                      //             ],
+                      //           ],
+                      //         ),
+                      //         const SizedBox(height: 8),
+                      //         Container(
+                      //           padding: const EdgeInsets.symmetric(
+                      //               horizontal: 10, vertical: 4),
+                      //           decoration: BoxDecoration(
+                      //             color: Colors.white.withOpacity(0.2),
+                      //             borderRadius: BorderRadius.circular(20),
+                      //           ),
+                      //           child: Text(
+                      //             _daysLeft(next['evnt_date']),
+                      //             style: const TextStyle(
+                      //                 color: Colors.white,
+                      //                 fontWeight: FontWeight.w700,
+                      //                 fontSize: 13),
+                      //           ),
+                      //         ),
+                      //       ],
+                      //     ),
+                      //   ),
+                      //   const SizedBox(height: 24),
+                      // ],
+
+
+                      if (nextDayEvents.isNotEmpty) ...[
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [
+                                  AppColors.primary,
+                                  AppColors.primaryLighter,
                                 ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
                               ),
-                              const SizedBox(height: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+
+                                const Text(
+                                  'NEXT EVENT DAY',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 11,
+                                    letterSpacing: 1.5,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
-                                child: Text(
-                                  _daysLeft(next['evnt_date']),
+
+                                const SizedBox(height: 8),
+
+                                Text(
+                                  DateFormat('d MMM yyyy').format(
+                                    DateTime.parse(
+                                      nextDayEvents.first['evnt_date'],
+                                    ),
+                                  ),
                                   style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+
+                                const SizedBox(height: 12),
+
+                                ...nextDayEvents.map((event) {
+
+                                  return Padding(
+                                    padding: const EdgeInsets.only(
+                                      bottom: 8,
+                                    ),
+                                    child: Row(
+                                      children: [
+
+                                        Expanded(
+                                          child: Text(
+                                            event['evnt_name'] ?? '',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ),
+
+                                        Text(
+                                          _formatTime(
+                                            event['evnt_startTime'],
+                                          ),
+                                          style: const TextStyle(
+                                            color: Colors.white70,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }),
+
+                                const SizedBox(height: 8),
+
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius:
+                                        BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    '${nextDayEvents.length} Event${nextDayEvents.length > 1 ? 's' : ''} Scheduled',
+                                    style: const TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.w700,
-                                      fontSize: 13),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 24),
-                      ],
+
+                          const SizedBox(height: 24),
+                    ],
+
 
                       // ── Calendar ──────────────────────────────────────────
                       _CalendarWidget(
@@ -273,6 +413,7 @@ void _listenToEvents() {
 
                           showModalBottomSheet(
                             context: context,
+                            isScrollControlled: true,
                             builder: (context) {
 
                               return Padding(
