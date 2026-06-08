@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/supabase_service.dart';
 import '../theme.dart';
+import 'cash_memo_preview_page.dart';
 
 class _MemoItem {
 
@@ -42,6 +43,8 @@ class _CashMemoEditorPageState extends State<CashMemoEditorPage> {
   DateTime _memoDate = DateTime.now();
   Map<String, dynamic>? _event;
   List<_MemoItem> _items = [];
+  bool _overrideTotal = false;
+  final _totalCtrl = TextEditingController();
 
   bool _saving = false;
 
@@ -56,6 +59,10 @@ class _CashMemoEditorPageState extends State<CashMemoEditorPage> {
     _loadEvent();
   }
 
+
+
+  
+
   Future<void> _saveMemo() async {
     setState(() => _saving = true);
 
@@ -65,10 +72,18 @@ class _CashMemoEditorPageState extends State<CashMemoEditorPage> {
              'event_id': widget.eventId,
              'memo_number': _memoNumberCtrl.text,
              'sold_to': _soldToCtrl.text,
-             'memo_date': DateFormat(
-                   'yyyy-MM-dd',
-                 ).format(_memoDate),
-    });
+            'memo_date': DateFormat(
+                    'yyyy-MM-dd',
+                  ).format(_memoDate),
+
+            'total_amount':
+                _overrideTotal
+                    ? int.tryParse(
+                          _totalCtrl.text,
+                        ) ??
+                        0
+                    : _calculatedTotal,
+                });
 
     await SupabaseService.addCashMemoItems( _items.map((item) {
 
@@ -151,12 +166,27 @@ Future<void> _loadEvent() async {
           amount: '${event['amount'] ?? 0}',
         ),
       ];
+      _totalCtrl.text = '${event['amount'] ?? 0}';
     });
 
   } catch (e) {
     print(e);
   }
+}
 
+  int get _calculatedTotal {
+
+  int total = 0;
+
+  for (final item in _items) {
+
+    total += int.tryParse(
+          item.amountCtrl.text,
+        ) ??
+        0;
+  }
+
+  return total;
 }
 
 @override
@@ -166,9 +196,10 @@ Widget build(BuildContext context) {
       title:
           const Text('Cash Memo'),
     ),
-    body: Padding(
-  padding: const EdgeInsets.all(16),
-  child: Column(
+    body: SafeArea(
+  child: SingleChildScrollView(
+    padding: const EdgeInsets.all(16),
+    child: Column(
     children: [
 
       TextField(
@@ -189,8 +220,9 @@ Widget build(BuildContext context) {
 
       const SizedBox(height: 20),
 
-      Expanded(
-        child: ListView.builder(
+    ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
           itemCount: _items.length,
           itemBuilder: (context, index) {
 
@@ -231,7 +263,6 @@ Widget build(BuildContext context) {
             );
           },
         ),
-      ),
 
       ElevatedButton.icon(
         onPressed: () {
@@ -247,6 +278,116 @@ Widget build(BuildContext context) {
 
       const SizedBox(height: 12),
 
+      const SizedBox(height: 20),
+
+      Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+            
+              Row(
+                children: [
+                
+                  const Text(
+                    'Total Amount',
+                    style: TextStyle(
+                      fontWeight:
+                          FontWeight.w700,
+                    ),
+                  ),
+      
+                  const Spacer(),
+      
+                  IconButton(
+                    onPressed: () {
+                    
+                      setState(() {
+                      
+                        _overrideTotal =
+                            !_overrideTotal;
+      
+                        if (!_overrideTotal) {
+                        
+                          _totalCtrl.text =
+                              _calculatedTotal
+                                  .toString();
+                        }
+                      });
+                    },
+                    icon: Icon(
+                      _overrideTotal
+                          ? Icons.lock_open
+                          : Icons.edit,
+                    ),
+                  ),
+                ],
+              ),
+      
+              _overrideTotal? 
+              TextField(
+                      controller:  _totalCtrl,
+                      keyboardType:
+                          TextInputType
+                              .number,
+                    )
+      
+                  : Text(
+                      '₹$_calculatedTotal',
+                      style:
+                          const TextStyle(
+                        fontSize: 24,
+                        fontWeight:
+                            FontWeight.w800,
+                      ),
+                    ),
+            ],
+          ),
+        ),
+      ),
+
+      ElevatedButton.icon(
+
+  onPressed: () {
+
+    Navigator.push(context,MaterialPageRoute(
+        builder: (_) => CashMemoPreviewPage(
+          soldTo: _soldToCtrl.text,
+          memoNumber: _memoNumberCtrl.text,
+          date:
+              DateFormat(
+                'dd/MM/yyyy',
+              ).format(
+                _memoDate, ),
+          total: _overrideTotal
+                  ? int.tryParse(_totalCtrl .text,) ??
+                      0
+                  : _calculatedTotal,
+
+          items: _items
+              .map(
+                (e) => {
+                  'particulars':e.particularsCtrl.text,
+
+                  'amount':int.tryParse(e.amountCtrl.text,) ??
+                          0,
+                },
+              )
+              .toList(),
+        ),
+      ),
+    );
+  },
+
+  icon: const Icon(
+    Icons.visibility,
+  ),
+
+  label: const Text(
+    'Preview Cash Memo',
+  ),
+),
+
       ElevatedButton(
         onPressed:
             _saving ? null : _saveMemo,
@@ -259,6 +400,7 @@ Widget build(BuildContext context) {
     ],
   ),
 ),
-  );
+  )
+);
 }
 }
