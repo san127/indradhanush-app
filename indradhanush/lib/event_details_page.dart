@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/supabase_service.dart';
 import '../theme.dart';
+import 'cash_memo_editor_page.dart';
 
 class EventDetailsPage extends StatefulWidget {
   final String eventId;
@@ -664,6 +665,50 @@ int get _remainingAmount {
                     ]),
                   ),
                   const SizedBox(height: 32),
+                  const SizedBox(height: 24),
+                  
+                  const Text(
+                    'Documents',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 12),
+                  
+                  Card(
+                    child: ListTile(
+                      leading: const Icon(
+                        Icons.receipt_long,
+                      ),
+                      title: const Text(
+                        'Generate Cash Memo',
+                      ),
+                      subtitle: const Text(
+                        'Create a cash memo for this event',
+                      ),
+                      trailing: const Icon(
+                        Icons.chevron_right,
+                      ),
+                      onTap: () {
+                      
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                CashMemoEditorPage(
+                              eventId:
+                                  widget.eventId,
+                            ),
+                          ),
+                        );
+                  
+                      },
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 12),
 
                   ElevatedButton(
                     onPressed: (_hasChanges && !_saving) ? _save : null,
@@ -671,6 +716,7 @@ int get _remainingAmount {
                       disabledBackgroundColor: AppColors.border,
                       disabledForegroundColor: AppColors.textHint,
                     ),
+                    
                     child: _saving
                         ? const SizedBox(
                             height: 20,

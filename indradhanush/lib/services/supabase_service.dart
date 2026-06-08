@@ -438,4 +438,86 @@ static Future<void> updateExpense({
       })
       .eq('exp_id', expenseId);
 }
+
+//cash memo method
+static Future<int> createCashMemo(
+  Map<String, dynamic> memo,
+) async {
+  final result = await _client
+      .from('cash_memos')
+      .insert(memo)
+      .select()
+      .single();
+
+  return result['memo_id'];
+}
+
+// adding cash memo items
+static Future<void> addCashMemoItems(
+  List<Map<String, dynamic>> items,
+) async {
+  await _client
+      .from('cash_memo_items')
+      .insert(items);
+}
+
+
+//fetch event specific cash memo
+static Future<List<Map<String, dynamic>>>
+    getCashMemosForEvent(
+  String eventId,
+) async {
+
+  final response = await _client
+      .from('cash_memos')
+      .select()
+      .eq('event_id', eventId)
+      .order(
+        'created_at',
+        ascending: false,
+      );
+
+  return List<Map<String, dynamic>>
+      .from(response);
+}
+
+static Future<String> generateMemoNumber(
+  String eventId,
+) async {
+
+  final events = await _client
+      .from('events')
+      .select('evnt_id, evnt_date')
+      .order(
+        'evnt_date',
+        ascending: true,
+      );
+
+  final eventList =
+      List<Map<String, dynamic>>.from(events);
+
+  final index = eventList.indexWhere(
+    (e) => e['evnt_id'] == eventId,
+  );
+
+  if (index == -1) {
+    throw Exception(
+      'Event not found',
+    );
+  }
+
+  final event = eventList[index];
+
+  final date = DateTime.parse(
+    event['evnt_date'],
+  );
+
+  final eventNumber =
+      index + 1;
+
+  return '${eventNumber.toString().padLeft(2, '0')}'
+      '${date.day.toString().padLeft(2, '0')}'
+      '${date.month.toString().padLeft(2, '0')}'
+      '${date.year.toString().substring(2)}';
+}
 }
