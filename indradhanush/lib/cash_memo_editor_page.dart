@@ -45,6 +45,7 @@ class _CashMemoEditorPageState extends State<CashMemoEditorPage> {
   List<_MemoItem> _items = [];
   bool _overrideTotal = false;
   final _totalCtrl = TextEditingController();
+  int? _memoId;
 
   bool _saving = false;
 
@@ -64,36 +65,70 @@ class _CashMemoEditorPageState extends State<CashMemoEditorPage> {
   
 
   Future<void> _saveMemo() async {
-    setState(() => _saving = true);
+  setState(() => _saving = true);
 
   try {
-    final memoId =
-        await SupabaseService.createCashMemo({
-             'event_id': widget.eventId,
-             'memo_number': _memoNumberCtrl.text,
-             'sold_to': _soldToCtrl.text,
-            'memo_date': DateFormat(
-                    'yyyy-MM-dd',
-                  ).format(_memoDate),
 
-            'total_amount':
-                _overrideTotal
-                    ? int.tryParse(
-                          _totalCtrl.text,
-                        ) ??
-                        0
-                    : _calculatedTotal,
-                });
+    final memoData = {
+      'event_id': widget.eventId,
+      'memo_number': _memoNumberCtrl.text,
+      'sold_to': _soldToCtrl.text,
+      'memo_date': DateFormat(
+        'yyyy-MM-dd',
+      ).format(_memoDate),
+      'total_amount': _overrideTotal
+          ? int.tryParse(
+                _totalCtrl.text,
+              ) ??
+              0
+          : _calculatedTotal,
+    };
 
-    await SupabaseService.addCashMemoItems( _items.map((item) {
+    int memoId;
+    final isNewMemo = _memoId == null;
+    
+    content: Text( isNewMemo
+      ? 'Cash Memo Saved'
+      : 'Cash Memo Updated',
+    );
+    if (_memoId == null) {
+
+      memoId =
+          await SupabaseService
+              .createCashMemo(
+                  memoData);
+
+      
+
+    } else {
+
+      memoId = _memoId!;
+
+      await SupabaseService
+          .updateCashMemo(
+        memoId,
+        memoData,
+      );
+
+      await SupabaseService
+          .deleteCashMemoItems(
+              memoId);
+    }
+
+    await SupabaseService
+        .addCashMemoItems(
+
+      _items.map((item) {
 
         return {
           'memo_id': memoId,
-          'particulars':  item.particularsCtrl.text,
-          'amount': int.tryParse(
-                item.amountCtrl.text,
-              ) ??
-              0,
+          'particulars':
+              item.particularsCtrl.text,
+          'amount':
+              int.tryParse(
+                    item.amountCtrl.text,
+                  ) ??
+                  0,
         };
 
       }).toList(),
@@ -103,9 +138,12 @@ class _CashMemoEditorPageState extends State<CashMemoEditorPage> {
 
       ScaffoldMessenger.of(context)
           .showSnackBar(
-        const SnackBar(
-          content:
-              Text('Cash Memo Saved'),
+        SnackBar(
+          content: Text(
+            _memoId == memoId
+                ? 'Cash Memo Updated'
+                : 'Cash Memo Saved',
+          ),
         ),
       );
 
@@ -132,7 +170,7 @@ class _CashMemoEditorPageState extends State<CashMemoEditorPage> {
         () => _saving = false,
       );
     }
-  } 
+  }
 }
 
 Future<void> _loadEvent() async {
@@ -142,11 +180,60 @@ Future<void> _loadEvent() async {
   try {
 
     final event =
-        await SupabaseService.getEvent(widget.eventId!);
-        if (event == null) return;
+        await SupabaseService.getEvent(
+            widget.eventId!);
+
+    if (event == null) return;
+
+    final existingMemo =
+        await SupabaseService
+            .getCashMemoForEvent(
+                widget.eventId!);
+
+    if (existingMemo != null) {
+
+      _memoId =
+          existingMemo['memo_id'];
+
+      final items =
+          await SupabaseService
+              .getCashMemoItems(
+                  _memoId!);
+
+      if (!mounted) return;
+
+      setState(() {
+
+        _event = event;
+
+        _soldToCtrl.text =
+            existingMemo['sold_to'] ?? '';
+
+        _memoNumberCtrl.text =
+            existingMemo['memo_number'] ?? '';
+
+        _totalCtrl.text =
+            '${existingMemo['total_amount'] ?? 0}';
+
+        _items = items.map((item) {
+
+          return _MemoItem(
+            particulars:
+                item['particulars'] ?? '',
+            amount:
+                '${item['amount'] ?? 0}',
+          );
+
+        }).toList();
+      });
+
+      return;
+    }
 
     final memoNumber =
-        await SupabaseService.generateMemoNumber(widget.eventId!);
+        await SupabaseService
+            .generateMemoNumber(
+                widget.eventId!);
 
     if (!mounted) return;
 
@@ -162,11 +249,15 @@ Future<void> _loadEvent() async {
 
       _items = [
         _MemoItem(
-          particulars: event['evnt_name'] ?? '',
-          amount: '${event['amount'] ?? 0}',
+          particulars:
+              event['evnt_name'] ?? '',
+          amount:
+              '${event['amount'] ?? 0}',
         ),
       ];
-      _totalCtrl.text = '${event['amount'] ?? 0}';
+
+      _totalCtrl.text =
+          '${event['amount'] ?? 0}';
     });
 
   } catch (e) {
@@ -227,42 +318,96 @@ Widget build(BuildContext context) {
           itemBuilder: (context, index) {
 
             final item = _items[index];
+              //             Row(
+              //   children: [
+                
+              //     Text(
+              //       'Item ${index + 1}',
+              //       style: const TextStyle(
+              //         fontWeight:
+              //             FontWeight.w700,
+              //       ),
+              //     ),
+
+              //     const Spacer(),
+
+              //     if (_items.length > 1)
+              //       IconButton(
+              //         icon: const Icon(
+              //           Icons.delete_outline,
+              //           color: Colors.red,
+              //         ),
+              //         onPressed: () {
+                      
+              //           setState(() {
+                        
+              //             _items.removeAt(
+              //               index,
+              //             );
+
+              //           });
+              //         },
+              //       ),
+              //   ],
+              // );
 
             return Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  children: [
+  child: Padding(
+    padding: const EdgeInsets.all(12),
+    child: Column(
+      children: [
 
-                    TextField(
-                      controller:
-                          item.particularsCtrl,
-                      decoration:
-                          const InputDecoration(
-                        labelText:
-                            'Particulars',
-                      ),
-                    ),
+        Row(
+          children: [
 
-                    const SizedBox(height: 10),
-
-                    TextField(
-                      controller:
-                          item.amountCtrl,
-                      keyboardType:
-                          TextInputType.number,
-                      decoration:
-                          const InputDecoration(
-                        labelText:
-                            'Amount',
-                      ),
-                    ),
-                  ],
-                ),
+            Text(
+              'Item ${index + 1}',
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
               ),
-            );
-          },
+            ),
+
+            const Spacer(),
+
+            if (_items.length > 1)
+              IconButton(
+                icon: const Icon(
+                  Icons.delete_outline,
+                  color: Colors.red,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _items.removeAt(index);
+                  });
+                },
+              ),
+          ],
         ),
+
+        const SizedBox(height: 10),
+
+        TextField(
+          controller: item.particularsCtrl,
+          decoration: const InputDecoration(
+            labelText: 'Particulars',
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        TextField(
+          controller: item.amountCtrl,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'Amount',
+          ),
+        ),
+      ],
+    ),
+  ),
+);
+},
+),
 
       ElevatedButton.icon(
         onPressed: () {

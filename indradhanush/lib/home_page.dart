@@ -330,7 +330,7 @@ void _listenToEvents() {
                                 ),
 
                                 const SizedBox(height: 12),
-
+                                
                                 ...nextDayEvents.map((event) {
 
                                   return Padding(
@@ -376,13 +376,14 @@ void _listenToEvents() {
                                         BorderRadius.circular(20),
                                   ),
                                   child: Text(
-                                    '${nextDayEvents.length} Event${nextDayEvents.length > 1 ? 's' : ''} Scheduled',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w700,
+                                      '${_daysLeft(nextDayEvents.first['evnt_date'])} • '
+                                      '${nextDayEvents.length} Event${nextDayEvents.length > 1 ? 's' : ''}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                      ),
                                     ),
-                                  ),
-                                ),
+                                )
                               ],
                             ),
                           ),

@@ -122,15 +122,27 @@ class CashMemoPreviewPage extends StatelessWidget {
                     children: [
 
                       Expanded(
+                        flex: 4,
                         child: Text(
-                          item[
-                              'particulars'],
+                          item['particulars'],
+                          softWrap: true,
+                        ),
+                      ),
+                      
+                      const SizedBox(width: 30),
+                      
+                      SizedBox(
+                        width: 100,
+                        child: Text(
+                          '₹${item['amount']}',
+                          textAlign:
+                              TextAlign.right,
                         ),
                       ),
 
-                      Text(
-                        '₹${item['amount']}',
-                      ),
+                      // Text(
+                      //   '₹${item['amount']}',
+                      // ),
                     ],
                   ),
                 );
@@ -154,7 +166,7 @@ class CashMemoPreviewPage extends StatelessWidget {
                 ),
               ),
 
-              const Spacer(),
+              const SizedBox(height: 60),
 
               const Align(
                 alignment:

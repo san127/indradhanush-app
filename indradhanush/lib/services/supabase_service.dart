@@ -520,4 +520,63 @@ static Future<String> generateMemoNumber(
       '${date.month.toString().padLeft(2, '0')}'
       '${date.year.toString().substring(2)}';
 }
+
+static Future<Map<String, dynamic>?>
+    getCashMemoForEvent(
+  String eventId,
+) async {
+
+  final response = await _client
+      .from('cash_memos')
+      .select()
+      .eq('event_id', eventId);
+
+  if (response.isEmpty) {
+    return null;
+  }
+
+  return response.first;
+}
+
+static Future<List<Map<String, dynamic>>>
+    getCashMemoItems(
+  int memoId,
+) async {
+
+  final response = await _client
+      .from('cash_memo_items')
+      .select()
+      .eq('memo_id', memoId);
+
+  return List<Map<String, dynamic>>
+      .from(response);
+}
+
+static Future<void>
+    updateCashMemo(
+  int memoId,
+  Map<String, dynamic> data,
+) async {
+
+  await _client
+      .from('cash_memos')
+      .update(data)
+      .eq(
+        'memo_id',
+        memoId,
+      );
+}
+
+static Future<void> deleteCashMemoItems(
+  int memoId,
+) async {
+
+  await _client
+      .from('cash_memo_items')
+      .delete()
+      .eq(
+        'memo_id',
+        memoId,
+      );
+}
 }
