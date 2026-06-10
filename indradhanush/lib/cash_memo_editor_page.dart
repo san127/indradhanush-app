@@ -185,6 +185,8 @@ Future<void> _loadEvent() async {
 
     if (event == null) return;
 
+    
+
     final existingMemo =
         await SupabaseService
             .getCashMemoForEvent(
@@ -205,6 +207,10 @@ Future<void> _loadEvent() async {
       setState(() {
 
         _event = event;
+
+      _memoDate = DateTime.parse(
+  existingMemo['memo_date'],
+);
 
         _soldToCtrl.text =
             existingMemo['sold_to'] ?? '';
@@ -500,10 +506,11 @@ Widget build(BuildContext context) {
           soldTo: _soldToCtrl.text,
           memoNumber: _memoNumberCtrl.text,
           date:
-              DateFormat(
-                'dd/MM/yyyy',
-              ).format(
-                _memoDate, ),
+            DateFormat(
+              'dd-MMM-yyyy',
+            ).format(
+              _memoDate,
+            ),
           total: _overrideTotal
                   ? int.tryParse(_totalCtrl .text,) ??
                       0

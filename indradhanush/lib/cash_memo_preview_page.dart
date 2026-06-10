@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:screenshot/screenshot.dart';
 
 class CashMemoPreviewPage extends StatelessWidget {
 
@@ -28,7 +29,10 @@ class CashMemoPreviewPage extends StatelessWidget {
         ),
       ),
 
-      body: Center(
+    body: SingleChildScrollView(
+      padding:
+      const EdgeInsets.all(20),
+      child: Center(
 
         child: Container(
 
@@ -49,35 +53,72 @@ class CashMemoPreviewPage extends StatelessWidget {
 
             children: [
 
-              const Center(
-                child: Text(
-                  'CASH MEMO',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight:
-                        FontWeight.w800,
+              Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                
+                  const Text(
+                    'INDRADHANUSH',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 34,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
-                ),
+
+                  const Text(
+                    'CASH MEMO',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
+            ),
 
               const SizedBox(
                 height: 20,
               ),
 
-              Text(
-                'No : $memoNumber',
-              ),
+              Row(
+                children: [
+                
+                  Expanded(
+                    child: Text(
+                      'No: $memoNumber',
+                      style: const TextStyle(
+                        fontWeight:
+                            FontWeight.w700,
+                      ),
+                    ),
+                  ),
 
-              Text(
-                'Date : $date',
+                  Expanded(
+                    child: Text(
+                      'Date: $date',
+                      textAlign:
+                          TextAlign.right,
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(
                 height: 10,
               ),
 
-              Text(
-                'Sold To : $soldTo',
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  border: Border.all(),
+                ),
+                child: Text(
+                  'Sold To: $soldTo',
+                ),
               ),
 
               const Divider(),
@@ -109,86 +150,135 @@ class CashMemoPreviewPage extends StatelessWidget {
                 height: 10,
               ),
 
-              ...items.map((item) {
+              Table(
+                columnWidths: const {
+                
+                  0: FlexColumnWidth(4),
 
-                return Padding(
-                  padding:
-                      const EdgeInsets
-                          .only(
-                    bottom: 8,
-                  ),
+                  1: FixedColumnWidth(90),
+                },
 
-                  child: Row(
+                border: TableBorder.all(),
+
+                children: [
+                
+                  const TableRow(
                     children: [
-
-                      Expanded(
-                        flex: 4,
+                    
+                      Padding(
+                        padding: EdgeInsets.all(8),
                         child: Text(
-                          item['particulars'],
-                          softWrap: true,
+                          'Particulars',
+                          style: TextStyle(
+                            fontWeight:
+                                FontWeight.bold,
+                          ),
                         ),
                       ),
-                      
-                      const SizedBox(width: 30),
-                      
-                      SizedBox(
-                        width: 100,
+
+                      Padding(
+                        padding: EdgeInsets.all(8),
                         child: Text(
-                          '₹${item['amount']}',
+                          'Amount',
                           textAlign:
                               TextAlign.right,
+                          style: TextStyle(
+                            fontWeight:
+                                FontWeight.bold,
+                          ),
                         ),
                       ),
-
-                      // Text(
-                      //   '₹${item['amount']}',
-                      // ),
                     ],
                   ),
-                );
-              }),
+
+                  ...items.map((item) {
+                  
+                    return TableRow(
+                      children: [
+                      
+                        Padding(
+                          padding:
+                              const EdgeInsets.all(
+                                  8),
+                          child: Text(
+                            item['particulars'],
+                            softWrap: true,
+                          ),
+                        ),
+
+                        Padding(
+                          padding:
+                              const EdgeInsets.all(
+                                  8),
+                          child: Text(
+                            '₹${item['amount']}',
+                            textAlign:
+                                TextAlign.right,
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
+                ],
+              ),
 
               const Divider(),
 
-              Align(
-                alignment:
-                    Alignment.centerRight,
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  border: Border.all(),
+                ),
+                child: Row(
+                  children: [
+                  
+                    const Text(
+                      'TOTAL',
+                      style: TextStyle(
+                        fontWeight:
+                            FontWeight.bold,
+                      ),
+                    ),
 
-                child: Text(
-                  'Total : ₹$total',
+                    const Spacer(),
 
-                  style:
-                      const TextStyle(
-                    fontSize: 18,
-                    fontWeight:
-                        FontWeight.w800,
-                  ),
+                    Text(
+                      '₹$total',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight:
+                            FontWeight.w900,
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
-              const SizedBox(height: 60),
+              const SizedBox(height: 80),
 
               const Align(
                 alignment:
                     Alignment.centerRight,
+                child: SizedBox(
+                  width: 150,
+                  child: Column(
+                    children: [
+                    
+                      Divider(),
 
-                child: Column(
-                  children: [
-
-                    SizedBox(
-                      height: 50,
-                    ),
-
-                    Text(
-                      'Signature',
-                    ),
-                  ],
+                      Text(
+                        'Signature',
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
         ),
       ),
-    );
+    )
+  );
   }
 }
