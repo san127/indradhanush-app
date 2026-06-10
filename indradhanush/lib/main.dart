@@ -35,7 +35,8 @@ class IndradhanushApp extends StatelessWidget {
       title : 'Indradhanush',
       debugShowCheckedModeBanner: false,
       theme : AppTheme.theme,
-      initialRoute: user != null? '/home' : '/auth',
+      home: const _AuthGate(),
+      // initialRoute: user != null? '/home' : '/auth',
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case '/auth' :
@@ -69,6 +70,39 @@ class IndradhanushApp extends StatelessWidget {
           default:
             return MaterialPageRoute(
                 builder: (_) => const AuthPage());
+        }
+      },
+    );
+  }
+}
+
+class _AuthGate extends StatelessWidget {
+  const _AuthGate();
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<AuthState>(
+      stream: Supabase.instance.client.auth.onAuthStateChange,
+      builder: (context, snapshot) {
+        
+  print('=== AUTH GATE ===');
+  print('Connection state: ${snapshot.connectionState}');
+  print('Has data: ${snapshot.hasData}');
+  print('Session: ${snapshot.data?.session}');
+  print('Event: ${snapshot.data?.event}');
+        // Still loading session
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final session = snapshot.data?.session;
+
+        if (session != null) {
+          return const HomePage();
+        } else {
+          return const AuthPage();
         }
       },
     );

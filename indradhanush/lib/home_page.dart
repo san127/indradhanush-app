@@ -142,12 +142,27 @@ void _listenToEvents() {
 }
   // ── navigation ───────────────────────────────────────────────────────────────
 
+  // void _onNavTap(int index) {
+  //   if (index == _navIndex) return;
+  //   if (index == 1) Navigator.pushNamed(context,'/finances',);
+  //   if (index == 2) Navigator.pushNamed(context, '/income');
+  //   // index 0 stays on home (all events)
+  // }
+
   void _onNavTap(int index) {
-    if (index == _navIndex) return;
-    if (index == 1) Navigator.pushNamed(context,'/finances',);
-    if (index == 2) Navigator.pushNamed(context, '/income');
-    // index 0 stays on home (all events)
+  if (index == _navIndex) return;
+  setState(() => _navIndex = index); // update index visually
+
+  if (index == 1) {
+    Navigator.pushNamed(context, '/finances').then((_) {
+      if (mounted) setState(() => _navIndex = 0); // reset on return
+    });
+  } else if (index == 2) {
+    Navigator.pushNamed(context, '/income').then((_) {
+      if (mounted) setState(() => _navIndex = 0); // reset on return
+    });
   }
+}
 
   @override
   void dispose() {

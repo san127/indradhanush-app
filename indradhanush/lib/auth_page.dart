@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/auth_service.dart';
 import '../services/supabase_service.dart';
 import '../theme.dart';
@@ -51,31 +52,55 @@ class _AuthPageState extends State<AuthPage>
 
 // function happens in the future, not immediately
 // so that app no freeze while func running like api call
-  Future<void> _login() async{
-    if(!_loginFormKey.currentState!.validate()) return;
-    setState(() => _loading = true);
+  // Future<void> _login() async{
+  //   if(!_loginFormKey.currentState!.validate()) return;
+  //   setState(() => _loading = true);
 
-    try{
-      await AuthService.signIn(_loginEmailCtrl.text.trim(), _loginPasswordCtrl.text);
-      // mounted checks if widget is still in memory
-      // if user exits before signin gets done, it is a waste
-      // if widget alive only then do signin async, otherwise no
+  //   try{
+  //     await AuthService.signIn(_loginEmailCtrl.text.trim(), _loginPasswordCtrl.text);
+  //     // mounted checks if widget is still in memory
+  //     // if user exits before signin gets done, it is a waste
+  //     // if widget alive only then do signin async, otherwise no
 
-      // after signin take to home, no back to home on press of back button
-      if (mounted) Navigator.pushNamedAndRemoveUntil(context,'/home',(route) => false,);
-    } catch(e) {
-      if(mounted) { // checl if ui still exists before continuing
-        ScaffoldMessenger.of(context).showSnackBar( // toast message
-          SnackBar(
-            content: Text('Login failed : ${e.toString()}'),
-            backgroundColor: Colors.redAccent),
-        );
-      }
-    } finally {
-      // stop the loading button if login fails or nothing 
-      if(mounted) setState(() => _loading = false);
+  //     // after signin take to home, no back to home on press of back button
+  //     if (mounted) Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+  //   } catch(e) {
+  //     if(mounted) { // checl if ui still exists before continuing
+  //       ScaffoldMessenger.of(context).showSnackBar( // toast message
+  //         SnackBar(
+  //           content: Text('Login failed : ${e.toString()}'),
+  //           backgroundColor: Colors.redAccent),
+  //       );
+  //     }
+  //   } finally {
+  //     // stop the loading button if login fails or nothing 
+  //     if(mounted) setState(() => _loading = false);
+  //   }
+  // }
+
+  Future<void> _login() async {
+  if (!_loginFormKey.currentState!.validate()) return;
+  setState(() => _loading = true);
+
+  try {
+    await AuthService.signIn(_loginEmailCtrl.text.trim(), _loginPasswordCtrl.text);
+     print('=== LOGIN SUCCESS ===');
+    print('Current user after login: ${Supabase.instance.client.auth.currentUser}');
+    print('Current session: ${Supabase.instance.client.auth.currentSession}');
+    // ← no Navigator call needed, _AuthGate handles it
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Login failed : ${e.toString()}'),
+          backgroundColor: Colors.redAccent),
+      );
     }
+  } finally {
+    if (mounted) setState(() => _loading = false);
   }
+}
+
 
 // create new account 
 Future<void> _signUp() async {
