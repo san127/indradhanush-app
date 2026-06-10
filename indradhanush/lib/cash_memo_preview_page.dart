@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:screenshot/screenshot.dart';
 import 'dart:io';
-
+import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+// import 'package:permission_handler/permission_handler.dart';
 
 class CashMemoPreviewPage extends StatefulWidget {
   final String soldTo;
@@ -44,16 +45,36 @@ class _CashMemoPreviewPageState extends State<CashMemoPreviewPage> {
   }
 
   Future<void> _saveImage() async {
-    try {
-      final file = await _captureImage();
+  try {
 
-      if (file == null) return;
+    final image =
+        await _screenshotController.capture();
 
-      if (!mounted) return;
+    if (image == null) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Image saved:\n${file.path}')));
+    print('Image bytes: ${image.length}');
+
+    final result =
+        await ImageGallerySaverPlus.saveImage(
+      image,
+      quality: 100,
+      name:
+          'cashmemo_${widget.memoNumber}',
+    );
+
+    print('Gallery result: $result');
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context)
+        .showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Saved to Gallery',
+        ),
+      ),
+    );
+
     } catch (e) {
       if (!mounted) return;
 
@@ -201,7 +222,7 @@ class _CashMemoPreviewPageState extends State<CashMemoPreviewPage> {
                       columnWidths: const {
                         0: FlexColumnWidth(4),
 
-                        1: FixedColumnWidth(90),
+                        1: FixedColumnWidth(80),
                       },
 
                       border: TableBorder.all(),
