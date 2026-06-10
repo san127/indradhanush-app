@@ -14,8 +14,7 @@ dependencies:
 
   screenshot: ^3.0.0
   path_provider: ^2.1.5
-  pdf: ^3.11.3
-  printing: ^5.14.2
+  share_plus: ^10.0.2
 
 
   cupertino_icons: ^1.0.8

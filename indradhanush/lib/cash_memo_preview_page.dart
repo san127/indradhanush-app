@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:screenshot/screenshot.dart';
+import 'dart:io';
 
-class CashMemoPreviewPage extends StatelessWidget {
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
+class CashMemoPreviewPage extends StatefulWidget {
   final String soldTo;
   final String memoNumber;
   final String date;
   final List<Map<String, dynamic>> items;
-  final int total;
+  final int
+  total; //final ScreenshotController _screenshotController = ScreenshotController();
 
   const CashMemoPreviewPage({
     super.key,
@@ -19,266 +23,278 @@ class CashMemoPreviewPage extends StatelessWidget {
   });
 
   @override
+  State<CashMemoPreviewPage> createState() => _CashMemoPreviewPageState();
+}
+
+class _CashMemoPreviewPageState extends State<CashMemoPreviewPage> {
+  final ScreenshotController _screenshotController = ScreenshotController();
+
+  Future<File?> _captureImage() async {
+    final image = await _screenshotController.capture();
+
+    if (image == null) return null;
+
+    final dir = await getApplicationDocumentsDirectory();
+
+    final file = File('${dir.path}/cashmemo_${widget.memoNumber}.png');
+
+    await file.writeAsBytes(image);
+
+    return file;
+  }
+
+  Future<void> _saveImage() async {
+    try {
+      final file = await _captureImage();
+
+      if (file == null) return;
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Image saved:\n${file.path}')));
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
+  Future<void> _shareImage() async {
+    try {
+      final file = await _captureImage();
+
+      if (file == null) return;
+
+      await Share.shareXFiles([
+        XFile(file.path),
+      ], text: 'Cash Memo ${widget.memoNumber}');
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-
       appBar: AppBar(
-        title: const Text(
-          'Cash Memo Preview',
-        ),
-      ),
+        title: const Text('Cash Memo Preview'),
 
-    body: SingleChildScrollView(
-      padding:
-      const EdgeInsets.all(20),
-      child: Center(
-
-        child: Container(
-
-          width: 700,
-          margin: const EdgeInsets.all(20),
-
-          padding: const EdgeInsets.all(16),
-
-          decoration: BoxDecoration(
-            border: Border.all(
-              width: 2,
-            ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.image_outlined),
+            tooltip: 'Save Image',
+            onPressed: _saveImage,
           ),
 
-          child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+          IconButton(
+            icon: const Icon(Icons.share),
+            tooltip: 'Share',
+            onPressed: _shareImage,
+          ),
+        ],
+      ),
 
-            children: [
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Center(
+          child: Screenshot(
+            controller: _screenshotController,
+            child: Material(
+              color: Colors.white,
+              child: Container(
+                width: 700,
+                margin: const EdgeInsets.all(20),
 
-              Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                
-                  const Text(
-                    'INDRADHANUSH',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 34,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
+                padding: const EdgeInsets.all(16),
 
-                  const Text(
-                    'CASH MEMO',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-              const SizedBox(
-                height: 20,
-              ),
-
-              Row(
-                children: [
-                
-                  Expanded(
-                    child: Text(
-                      'No: $memoNumber',
-                      style: const TextStyle(
-                        fontWeight:
-                            FontWeight.w700,
-                      ),
-                    ),
-                  ),
-
-                  Expanded(
-                    child: Text(
-                      'Date: $date',
-                      textAlign:
-                          TextAlign.right,
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(
-                height: 10,
-              ),
-
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  border: Border.all(),
+                  color: Colors.white,
+                  border: Border.all(width: 2),
                 ),
-                child: Text(
-                  'Sold To: $soldTo',
-                ),
-              ),
 
-              const Divider(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
 
-              const Row(
-                children: [
+                  children: [
+                    Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            'INDRADHANUSH',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 34,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
 
-                  Expanded(
-                    child: Text(
-                      'Particulars',
-                      style: TextStyle(
-                        fontWeight:
-                            FontWeight.w700,
+                          const Text(
+                            'CASH MEMO',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
 
-                  Text(
-                    'Amount',
-                    style: TextStyle(
-                      fontWeight:
-                          FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
+                    const SizedBox(height: 40),
 
-              const SizedBox(
-                height: 10,
-              ),
-
-              Table(
-                columnWidths: const {
-                
-                  0: FlexColumnWidth(4),
-
-                  1: FixedColumnWidth(90),
-                },
-
-                border: TableBorder.all(),
-
-                children: [
-                
-                  const TableRow(
-                    children: [
-                    
-                      Padding(
-                        padding: EdgeInsets.all(8),
-                        child: Text(
-                          'Particulars',
-                          style: TextStyle(
-                            fontWeight:
-                                FontWeight.bold,
-                          ),
-                        ),
-                      ),
-
-                      Padding(
-                        padding: EdgeInsets.all(8),
-                        child: Text(
-                          'Amount',
-                          textAlign:
-                              TextAlign.right,
-                          style: TextStyle(
-                            fontWeight:
-                                FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  ...items.map((item) {
-                  
-                    return TableRow(
+                    Row(
                       children: [
-                      
-                        Padding(
-                          padding:
-                              const EdgeInsets.all(
-                                  8),
+                        Expanded(
                           child: Text(
-                            item['particulars'],
-                            softWrap: true,
+                            'No: ${widget.memoNumber}',
+                            style: const TextStyle(fontWeight: FontWeight.w700),
                           ),
                         ),
 
-                        Padding(
-                          padding:
-                              const EdgeInsets.all(
-                                  8),
+                        Expanded(
                           child: Text(
-                            '₹${item['amount']}',
-                            textAlign:
-                                TextAlign.right,
+                            'Date: ${widget.date}',
+                            textAlign: TextAlign.right,
                           ),
                         ),
                       ],
-                    );
-                  }),
-                ],
-              ),
+                    ),
 
-              const Divider(),
+                    const SizedBox(height: 10),
 
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  border: Border.all(),
-                ),
-                child: Row(
-                  children: [
-                  
-                    const Text(
-                      'TOTAL',
-                      style: TextStyle(
-                        fontWeight:
-                            FontWeight.bold,
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(border: Border.all()),
+                      child: Text('Sold To: ${widget.soldTo}'),
+                    ),
+
+                    //const Divider(),
+
+                    // const Row(
+                    //   children: [
+                    //     Expanded(
+                    //       child: Text(
+                    //         'Particulars',
+                    //         style: TextStyle(fontWeight: FontWeight.w700),
+                    //       ),
+                    //     ),
+
+                    //     Text(
+                    //       'Amount',
+                    //       style: TextStyle(fontWeight: FontWeight.w700),
+                    //     ),
+                    //   ],
+                    // ),
+                    const SizedBox(height: 10),
+
+                    Table(
+                      columnWidths: const {
+                        0: FlexColumnWidth(4),
+
+                        1: FixedColumnWidth(90),
+                      },
+
+                      border: TableBorder.all(),
+
+                      children: [
+                        const TableRow(
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.all(8),
+                              child: Text(
+                                'Particulars',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+
+                            Padding(
+                              padding: EdgeInsets.all(8),
+                              child: Text(
+                                'Amount',
+                                textAlign: TextAlign.right,
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        ...widget.items.map((item) {
+                          return TableRow(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(8),
+                                child: Text(
+                                  item['particulars'],
+                                  softWrap: true,
+                                ),
+                              ),
+
+                              Padding(
+                                padding: const EdgeInsets.all(8),
+                                child: Text(
+                                  '₹${item['amount']}',
+                                  textAlign: TextAlign.right,
+                                ),
+                              ),
+                            ],
+                          );
+                        }),
+                      ],
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    //const Divider(),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(border: Border.all()),
+                      child: Row(
+                        children: [
+                          const Text(
+                            'TOTAL',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+
+                          const Spacer(),
+
+                          Text(
+                            '₹${widget.total}',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
 
-                    const Spacer(),
+                    const SizedBox(height: 80),
 
-                    Text(
-                      '₹$total',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight:
-                            FontWeight.w900,
+                    const Align(
+                      alignment: Alignment.centerRight,
+                      child: SizedBox(
+                        width: 150,
+                        child: Column(children: [Divider(), Text('Signature')]),
                       ),
                     ),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 80),
-
-              const Align(
-                alignment:
-                    Alignment.centerRight,
-                child: SizedBox(
-                  width: 150,
-                  child: Column(
-                    children: [
-                    
-                      Divider(),
-
-                      Text(
-                        'Signature',
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
-    )
-  );
+    );
   }
 }
